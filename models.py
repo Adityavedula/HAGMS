@@ -31,6 +31,7 @@ class WorkoutPlan(db.Model):
     title = db.Column(db.String(100))
     level = db.Column(db.String(50))  # beginner, intermediate, advanced
     description = db.Column(db.Text)
+    duration = db.Column(db.Integer, nullable=True)  # Add duration field in minutes
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -43,6 +44,11 @@ class Exercise(db.Model):
     description = db.Column(db.Text)
     video_url = db.Column(db.String(255))
     muscle_group = db.Column(db.String(50))
+    # Add these fields to match your app.py usage
+    sets = db.Column(db.Integer, nullable=True)
+    reps = db.Column(db.String(20), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    workout_plan_id = db.Column(db.Integer, nullable=True)  # For direct relationship
 
 
 class NutritionLog(db.Model):
