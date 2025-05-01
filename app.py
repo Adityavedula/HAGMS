@@ -571,7 +571,7 @@ def edit_workout_plan(id):
         
         db.session.commit()
         flash('Workout plan updated successfully!', 'success')
-        return redirect(url_for('workout_plan', id=plan.id))
+        return redirect(url_for('workout_plans', id=plan.id))
     
     return render_template('edit_workout_plan.html', plan=plan)
 
