@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from db import db  # This assumes your db is initialized in db.py
@@ -9,8 +10,12 @@ from models import User, WorkoutPlan, Exercise, NutritionLog, Progress  # Your m
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fitness_app.db'
 app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
