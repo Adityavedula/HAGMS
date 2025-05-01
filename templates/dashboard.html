@@ -1,0 +1,280 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="dashboard-container">
+    <div class="container py-4">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner mb-4">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="welcome-card">
+                        <div class="welcome-content">
+                            <h1>Welcome back, <span class="user-name">{{ user.name }}</span></h1>
+                            <p class="welcome-message">Ready to crush your fitness goals today?</p>
+                            <div class="quick-stats">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-fire"></i>
+                                    </div>
+                                    <div class="stat-data">
+                                        <span class="stat-value">2,340</span>
+                                        <span class="stat-label">Calories Burned This Week</span>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-dumbbell"></i>
+                                    </div>
+                                    <div class="stat-data">
+                                        <span class="stat-value">15</span>
+                                        <span class="stat-label">Workouts Completed</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mt-4 mt-lg-0">
+                    <div class="streak-card">
+                        <div class="streak-content">
+                            <div class="streak-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="streak-info">
+                                <span class="streak-value">7</span>
+                                <span class="streak-label">Day Streak</span>
+                            </div>
+                            <div class="streak-message">Keep it up! You're on fire!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="row g-4">
+            <!-- Today's Plan -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-calendar-day me-2"></i>Today's Plan</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="workout-plan">
+                            <h4>Upper Body Strength</h4>
+                            <div class="workout-details">
+                                <span><i class="fas fa-clock me-1"></i> 45 minutes</span>
+                                <span><i class="fas fa-bolt me-1"></i> 320 calories</span>
+                            </div>
+                            <div class="workout-progress mt-3">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-text">Not started</div>
+                            </div>
+                            <a href="#" class="btn btn-primary mt-3"><i class="fas fa-play me-1"></i> Start Workout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nutrition Summary -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-utensils me-2"></i>Nutrition Today</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="nutrition-summary">
+                            <div class="calorie-circle">
+                                <div class="circle-content">
+                                    <div class="calories-consumed">1,200</div>
+                                    <div class="calories-goal">/ 2,400</div>
+                                </div>
+                            </div>
+                            <div class="macro-breakdown">
+                                <div class="macro-item">
+                                    <div class="macro-label">Protein</div>
+                                    <div class="macro-bar">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 65%"></div>
+                                        </div>
+                                        <div class="macro-value">65%</div>
+                                    </div>
+                                </div>
+                                <div class="macro-item">
+                                    <div class="macro-label">Carbs</div>
+                                    <div class="macro-bar">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 40%"></div>
+                                        </div>
+                                        <div class="macro-value">40%</div>
+                                    </div>
+                                </div>
+                                <div class="macro-item">
+                                    <div class="macro-label">Fats</div>
+                                    <div class="macro-bar">
+                                        <div class="progress">
+                                            <div class="progress-bar bg-danger" role="progressbar" style="width: 45%"></div>
+                                        </div>
+                                        <div class="macro-value">45%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('nutrition_logs') }}" class="btn btn-outline-primary mt-3"><i class="fas fa-plus me-1"></i> Log Meal</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tracker -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line me-2"></i>Progress</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-summary">
+                            <div class="weight-tracker">
+                                <div class="current-weight">
+                                    <span class="weight-value">165</span>
+                                    <span class="weight-unit">lbs</span>
+                                </div>
+                                <div class="weight-change down">
+                                    <i class="fas fa-arrow-down"></i> 2.5 lbs this month
+                                </div>
+                            </div>
+                            <div class="progress-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-icon"><i class="fas fa-tape"></i></div>
+                                    <div class="metric-data">
+                                        <div class="metric-label">Waist</div>
+                                        <div class="metric-value">32"</div>
+                                        <div class="metric-change down">-0.5"</div>
+                                    </div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-icon"><i class="fas fa-heartbeat"></i></div>
+                                    <div class="metric-data">
+                                        <div class="metric-label">Resting HR</div>
+                                        <div class="metric-value">68 bpm</div>
+                                        <div class="metric-change down">-3 bpm</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('progress_logs') }}" class="btn btn-outline-primary mt-3"><i class="fas fa-plus me-1"></i> Update Metrics</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Workouts -->
+            <div class="col-md-6 col-lg-8">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-history me-2"></i>Recent Workouts</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="recent-workouts">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Workout</th>
+                                        <th>Duration</th>
+                                        <th>Intensity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Apr 30</td>
+                                        <td>HIIT Cardio</td>
+                                        <td>35 mins</td>
+                                        <td><span class="badge bg-danger">High</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Apr 28</td>
+                                        <td>Leg Day</td>
+                                        <td>50 mins</td>
+                                        <td><span class="badge bg-warning">Medium</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Apr 27</td>
+                                        <td>Core Strength</td>
+                                        <td>25 mins</td>
+                                        <td><span class="badge bg-success">Low</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <a href="{{ url_for('workout_plans') }}" class="btn btn-outline-primary"><i class="fas fa-list me-1"></i> View All Workouts</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Goals -->
+            <div class="col-md-6 col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-bullseye me-2"></i>Weekly Goals</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="goals-list">
+                            <div class="goal-item">
+                                <div class="goal-checkbox">
+                                    <input type="checkbox" id="goal1" checked>
+                                    <label for="goal1" class="form-check-label">4 Workouts</label>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+                                    </div>
+                                    <div class="goal-counter">3/4</div>
+                                </div>
+                            </div>
+                            <div class="goal-item">
+                                <div class="goal-checkbox">
+                                    <input type="checkbox" id="goal2">
+                                    <label for="goal2" class="form-check-label">10,000 Steps Daily</label>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 40%"></div>
+                                    </div>
+                                    <div class="goal-counter">2/5</div>
+                                </div>
+                            </div>
+                            <div class="goal-item">
+                                <div class="goal-checkbox">
+                                    <input type="checkbox" id="goal3">
+                                    <label for="goal3" class="form-check-label">100g Protein Daily</label>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 60%"></div>
+                                    </div>
+                                    <div class="goal-counter">3/5</div>
+                                </div>
+                            </div>
+                            <div class="goal-item">
+                                <div class="goal-checkbox">
+                                    <input type="checkbox" id="goal4">
+                                    <label for="goal4" class="form-check-label">2L Water Daily</label>
+                                </div>
+                                <div class="goal-progress">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 80%"></div>
+                                    </div>
+                                    <div class="goal-counter">4/5</div>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-outline-primary mt-3"><i class="fas fa-edit me-1"></i> Edit Goals</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

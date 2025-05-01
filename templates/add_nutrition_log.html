@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Add Nutrition Log</h2>
+<form method="POST">
+    Date: <input type="date" name="date" required><br>
+    Meal: <input type="text" name="meal" required><br>
+    Calories: <input type="number" step="0.01" name="calories"><br>
+    Protein: <input type="number" step="0.01" name="protein"><br>
+    Carbs: <input type="number" step="0.01" name="carbs"><br>
+    Fats: <input type="number" step="0.01" name="fats"><br>
+    <input type="submit" value="Add">
+</form>
+{% endblock %}

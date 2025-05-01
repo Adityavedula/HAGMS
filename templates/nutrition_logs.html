@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Your Nutrition Logs</h2>
+<a href="{{ url_for('add_nutrition_log') }}">Add Log</a>
+<ul>
+    {% for log in logs %}
+        <li>{{ log.date }} - {{ log.meal }} ({{ log.calories }} kcal)</li>
+    {% endfor %}
+</ul>
+{% endblock %}
