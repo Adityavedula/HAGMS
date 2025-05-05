@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, send_file, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_migrate import Migrate
@@ -9,6 +9,12 @@ from models import User, WorkoutPlan, Exercise, NutritionLog, Progress  # Your m
 import csv
 import io
 from sqlalchemy import func, extract
+import os
+from dotenv import load_dotenv
+import cv2
+import mediapipe as mp
+import numpy as np
+import json
 
 
 app = Flask(__name__)
@@ -68,75 +74,98 @@ def logout():
 def dashboard():
     # Get user's nutrition logs for today
     today = datetime.now().date()
-    today_nutrition = NutritionLog.query.filter_by(
-        user_id=current_user.id, 
+    today_logs = NutritionLog.query.filter_by(
+        user_id=current_user.id,
         date=today
     ).all()
     
-    # Calculate total calories and macros for today
-    total_calories = sum(log.calories for log in today_nutrition) if today_nutrition else 0
-    total_protein = sum(log.protein for log in today_nutrition) if today_nutrition else 0
-    total_carbs = sum(log.carbs for log in today_nutrition) if today_nutrition else 0
-    total_fats = sum(log.fats for log in today_nutrition) if today_nutrition else 0
+    # Calculate today's totals
+    total_calories = sum(log.calories for log in today_logs)
+    total_protein = sum(log.protein for log in today_logs)
+    total_carbs = sum(log.carbs for log in today_logs)
+    total_fats = sum(log.fats for log in today_logs)
     
-    # Get user's workouts - let's say recent 3 workouts
-    # For now we'll just get workout plans since there's no workout log model
+    # Get today's workout plan
+    today_workout = WorkoutPlan.query.filter(
+        WorkoutPlan.created_by == current_user.id,
+        WorkoutPlan.date == today
+    ).first()
+    
+    if not today_workout:
+        # Create a default workout if none exists
+        today_workout = {
+            "name": "No workout planned",
+            "duration": 0,
+            "calories": 0,
+            "progress": 0,
+            "workout_id": None
+        }
+    else:
+        today_workout = {
+            "name": today_workout.title,
+            "duration": today_workout.duration,
+            "calories": today_workout.calories or 0,
+            "progress": today_workout.progress,
+            "workout_id": today_workout.id
+        }
+    
+    # Get recent workouts
     recent_workouts = WorkoutPlan.query.filter_by(
         created_by=current_user.id
-    ).order_by(WorkoutPlan.created_at.desc()).limit(3).all()
+    ).order_by(WorkoutPlan.created_at.desc()).limit(5).all()
     
-    # Get user's latest progress
+    # Get latest progress
     latest_progress = Progress.query.filter_by(
         user_id=current_user.id
     ).order_by(Progress.date.desc()).first()
     
-    # Calculate progress data
-    # For weight change, get the progress from a month ago
-    one_month_ago = datetime.now().date().replace(day=1) - timedelta(days=1)  # Fixed here
-    month_ago_progress = Progress.query.filter(
-        Progress.user_id == current_user.id,
-        Progress.date <= one_month_ago
-    ).order_by(Progress.date.desc()).first()
-    
+    # Calculate weight change
     weight_change = 0
-    if latest_progress and month_ago_progress:
-        weight_change = latest_progress.weight - month_ago_progress.weight
+    if latest_progress:
+        month_ago = today - timedelta(days=30)
+        old_progress = Progress.query.filter(
+            Progress.user_id == current_user.id,
+            Progress.date <= month_ago
+        ).order_by(Progress.date.desc()).first()
+        
+        if old_progress:
+            weight_change = latest_progress.weight - old_progress.weight
     
-    # Calculate weekly stats
-    # Get the beginning of the current week
-    start_of_week = datetime.now().date() - timedelta(days=datetime.now().weekday())  # Fixed here
+    # Get weekly stats
+    week_ago = today - timedelta(days=7)
+    calories_burned_week = WorkoutPlan.query.filter(
+        WorkoutPlan.created_by == current_user.id,
+        WorkoutPlan.date >= week_ago,
+        WorkoutPlan.progress == 100
+    ).with_entities(func.sum(WorkoutPlan.calories)).scalar() or 0
     
-    # Get nutrition logs for this week
-    week_nutrition = NutritionLog.query.filter(
-        NutritionLog.user_id == current_user.id,
-        NutritionLog.date >= start_of_week
-    ).all()
+    workouts_completed = WorkoutPlan.query.filter(
+        WorkoutPlan.created_by == current_user.id,
+        WorkoutPlan.date >= week_ago,
+        WorkoutPlan.progress == 100
+    ).count()
     
-    # Calculate calories burned (this would normally come from workout logs)
-    # For now, we'll use a placeholder value
-    calories_burned_week = 2340  # Placeholder
-    
-    # Calculate workouts completed this week
-    workouts_completed = 3  # Placeholder
-    
-    # Get weekly goals (placeholder - this would be a separate model)
+    # Get weekly goals
     weekly_goals = [
-        {"name": "4 Workouts", "current": workouts_completed, "target": 4},
-        {"name": "10,000 Steps Daily", "current": 2, "target": 5},
-        {"name": "100g Protein Daily", "current": 3, "target": 5},
-        {"name": "2L Water Daily", "current": 4, "target": 5}
+        {"name": "Workouts", "current": workouts_completed, "target": 5},
+        {"name": "Calories Burned", "current": calories_burned_week, "target": 2000}
     ]
     
-    # For the streak (placeholder)
-    streak = 7  # Placeholder
-    
-    # For today's workout plan (placeholder)
-    today_workout = {
-        "name": "Upper Body Strength",
-        "duration": 45,
-        "calories": 320,
-        "progress": 0  # 0 for not started
-    }
+    # Calculate streak
+    streak = 0
+    current_date = today
+    while True:
+        workout = WorkoutPlan.query.filter(
+            WorkoutPlan.created_by == current_user.id,
+            WorkoutPlan.date == current_date,
+            WorkoutPlan.progress == 100
+        ).first()
+        
+        if not workout:
+            break
+            
+        streak += 1
+        current_date -= timedelta(days=1)
     
     # Daily calorie goal (placeholder)
     daily_calorie_goal = 2400
@@ -404,36 +433,73 @@ def nutrition_chart_data():
 
 
 @app.route('/add_nutrition_log', methods=['GET', 'POST'])
-
 @login_required
-
 def add_nutrition_log():
-
     if request.method == 'POST':
-        # Parse the form data
-        date = datetime.strptime(request.form['date'], '%Y-%m-%d')
-        meal = request.form['meal']
-        calories = float(request.form['calories'])
-        protein = float(request.form['protein'])
-        carbs = float(request.form['carbs'])
-        fats = float(request.form['fats'])
-        # Create new nutrition log
-        new_log = NutritionLog(
-            user_id=current_user.id,
-            date=date,
-            meal=meal,
-            calories=calories,
-            protein=protein,
-            carbs=carbs,
-            fats=fats
-        )
-        # Save to database
-        db.session.add(new_log)
-        db.session.commit()
-        flash('Nutrition log added successfully!', 'success')
-        return redirect(url_for('nutrition_logs'))
+        try:
+            # Parse the form data
+            date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+            meal = request.form['meal']
+            calories = float(request.form['calories'])
+            protein = float(request.form['protein'])
+            carbs = float(request.form['carbs'])
+            fats = float(request.form['fats'])
+            
+            # Create new nutrition log
+            new_log = NutritionLog(
+                user_id=current_user.id,
+                date=date,
+                meal=meal,
+                calories=calories,
+                protein=protein,
+                carbs=carbs,
+                fats=fats
+            )
+            
+            # Save to database
+            db.session.add(new_log)
+            db.session.commit()
+            flash('Nutrition log added successfully!', 'success')
+            return redirect(url_for('nutrition_logs'))
+            
+        except ValueError as e:
+            flash(f'Error: Invalid input format. Please check your values. {str(e)}', 'danger')
+            return redirect(url_for('add_nutrition_log'))
+        except Exception as e:
+            flash(f'Error: An unexpected error occurred. {str(e)}', 'danger')
+            db.session.rollback()
+            return redirect(url_for('add_nutrition_log'))
+    
     # If GET request, display the form
-    return render_template('add_nutrition_log.html')
+    # Get today's nutrition logs for the current user
+    today = datetime.now().date()
+    today_nutrition = NutritionLog.query.filter_by(
+        user_id=current_user.id,
+        date=today
+    ).all()
+    
+    # Calculate daily totals
+    daily_totals = {
+        'calories': sum(log.calories for log in today_nutrition) if today_nutrition else 0,
+        'protein': sum(log.protein for log in today_nutrition) if today_nutrition else 0,
+        'carbs': sum(log.carbs for log in today_nutrition) if today_nutrition else 0,
+        'fats': sum(log.fats for log in today_nutrition) if today_nutrition else 0
+    }
+    
+    # Default user goals (these would normally come from user settings)
+    user_goals = {
+        'calories': 2000,
+        'protein': 150,
+        'carbs': 250,
+        'fats': 70
+    }
+    
+    return render_template(
+        'add_nutrition_log.html',
+        today=datetime.now(),
+        daily_totals=daily_totals,
+        user_goals=user_goals
+    )
 
 
 @app.route('/add_progress_log', methods=['GET', 'POST'])
@@ -598,6 +664,11 @@ def delete_workout_plan(id):
     
     flash('Workout plan deleted successfully!', 'success')
     return redirect(url_for('workout_plans'))
+
+@app.route('/pose-detection')
+@login_required
+def pose_detection():
+    return render_template('pose_detection.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

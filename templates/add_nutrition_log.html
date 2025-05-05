@@ -136,25 +136,25 @@
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 Calories
                                                 <span class="badge bg-primary rounded-pill" id="total-calories">
-                                                    {{ daily_totals.calories|default(0)|round|int + 0 }} kcal
+                                                    {{ daily_totals.calories|default(0)|round|int }} kcal
                                                 </span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 Protein
                                                 <span class="badge bg-success rounded-pill" id="total-protein">
-                                                    {{ daily_totals.protein|default(0)|round|int + 0 }}g
+                                                    {{ daily_totals.protein|default(0)|round|int }}g
                                                 </span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 Carbs
                                                 <span class="badge bg-info rounded-pill" id="total-carbs">
-                                                    {{ daily_totals.carbs|default(0)|round|int + 0 }}g
+                                                    {{ daily_totals.carbs|default(0)|round|int }}g
                                                 </span>
                                             </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 Fats
                                                 <span class="badge bg-warning rounded-pill" id="total-fats">
-                                                    {{ daily_totals.fats|default(0)|round|int + 0 }}g
+                                                    {{ daily_totals.fats|default(0)|round|int }}g
                                                 </span>
                                             </li>
                                         </ul>
@@ -173,7 +173,7 @@
                                             <div class="d-flex justify-content-between">
                                                 <span>Calories:</span>
                                                 <span id="calories-goal-display">
-                                                    {{ daily_totals.calories|default(0)|round|int + 0 }} / {{ user_goals.calories|default(2000) }} kcal
+                                                    {{ daily_totals.calories|default(0)|round|int }} / {{ user_goals.calories|default(2000) }} kcal
                                                 </span>
                                             </div>
                                         </div>
@@ -181,7 +181,7 @@
                                             <div class="d-flex justify-content-between">
                                                 <span>Protein:</span>
                                                 <span id="protein-goal-display">
-                                                    {{ daily_totals.protein|default(0)|round|int + 0 }} / {{ user_goals.protein|default(150) }}g
+                                                    {{ daily_totals.protein|default(0)|round|int }} / {{ user_goals.protein|default(150) }}g
                                                 </span>
                                             </div>
                                         </div>
@@ -189,7 +189,7 @@
                                             <div class="d-flex justify-content-between">
                                                 <span>Carbs:</span>
                                                 <span id="carbs-goal-display">
-                                                    {{ daily_totals.carbs|default(0)|round|int + 0 }} / {{ user_goals.carbs|default(250) }}g
+                                                    {{ daily_totals.carbs|default(0)|round|int }} / {{ user_goals.carbs|default(250) }}g
                                                 </span>
                                             </div>
                                         </div>
@@ -197,7 +197,7 @@
                                             <div class="d-flex justify-content-between">
                                                 <span>Fats:</span>
                                                 <span id="fats-goal-display">
-                                                    {{ daily_totals.fats|default(0)|round|int + 0 }} / {{ user_goals.fats|default(70) }}g
+                                                    {{ daily_totals.fats|default(0)|round|int }} / {{ user_goals.fats|default(70) }}g
                                                 </span>
                                             </div>
                                         </div>
@@ -323,43 +323,24 @@
             let proteinPercent = 0, carbsPercent = 0, fatsPercent = 0;
             
             if (totalCalories > 0) {
-                proteinPercent = Math.round((proteinCalories / totalCalories) * 100);
-                carbsPercent = Math.round((carbsCalories / totalCalories) * 100);
-                fatsPercent = Math.round((fatsCalories / totalCalories) * 100);
-                
-                // Handle rounding issues
-                const totalPercent = proteinPercent + carbsPercent + fatsPercent;
-                if (totalPercent !== 100) {
-                    // Adjust the largest percentage to make total 100%
-                    if (proteinPercent >= carbsPercent && proteinPercent >= fatsPercent) {
-                        proteinPercent += (100 - totalPercent);
-                    } else if (carbsPercent >= proteinPercent && carbsPercent >= fatsPercent) {
-                        carbsPercent += (100 - totalPercent);
-                    } else {
-                        fatsPercent += (100 - totalPercent);
-                    }
-                }
+                proteinPercent = (proteinCalories / totalCalories) * 100;
+                carbsPercent = (carbsCalories / totalCalories) * 100;
+                fatsPercent = (fatsCalories / totalCalories) * 100;
             }
             
             // Update progress bars
-            const proteinBar = document.getElementById('protein-bar');
-            const carbsBar = document.getElementById('carbs-bar');
-            const fatsBar = document.getElementById('fats-bar');
+            document.getElementById('protein-bar').style.width = proteinPercent + '%';
+            document.getElementById('carbs-bar').style.width = carbsPercent + '%';
+            document.getElementById('fats-bar').style.width = fatsPercent + '%';
             
-            proteinBar.style.width = proteinPercent + '%';
-            carbsBar.style.width = carbsPercent + '%';
-            fatsBar.style.width = fatsPercent + '%';
+            document.getElementById('protein-bar').textContent = Math.round(proteinPercent) + '%';
+            document.getElementById('carbs-bar').textContent = Math.round(carbsPercent) + '%';
+            document.getElementById('fats-bar').textContent = Math.round(fatsPercent) + '%';
             
-            proteinBar.textContent = proteinPercent + '%';
-            carbsBar.textContent = carbsPercent + '%';
-            fatsBar.textContent = fatsPercent + '%';
+            document.getElementById('protein-percent').textContent = Math.round(proteinPercent);
+            document.getElementById('carbs-percent').textContent = Math.round(carbsPercent);
+            document.getElementById('fats-percent').textContent = Math.round(fatsPercent);
             
-            // Update percentage text
-            document.getElementById('protein-percent').textContent = proteinPercent;
-            document.getElementById('carbs-percent').textContent = carbsPercent;
-            document.getElementById('fats-percent').textContent = fatsPercent;
-            
-            // Update calories text
             document.getElementById('protein-calories').textContent = Math.round(proteinCalories);
             document.getElementById('carbs-calories').textContent = Math.round(carbsCalories);
             document.getElementById('fats-calories').textContent = Math.round(fatsCalories);

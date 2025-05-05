@@ -34,6 +34,9 @@ class WorkoutPlan(db.Model):
     duration = db.Column(db.Integer, nullable=True)  # Add duration field in minutes
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    date = db.Column(db.Date, nullable=True)  # Add date field for scheduling workouts
+    progress = db.Column(db.Integer, default=0)  # Add progress field (0-100)
+    calories = db.Column(db.Integer, nullable=True)  # Add calories field
 
     exercises = db.relationship('Exercise', secondary=workout_exercises, backref='plans')
 
