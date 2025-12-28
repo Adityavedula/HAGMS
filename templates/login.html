@@ -1,8 +1,12 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-<div class="login-container">
-    <div class="row g-0">
+{% block styles %}
+    <link rel="stylesheet" href="{{url_for('static', filename='css/login.css')}}">
+{% endblock %}
+
+<div class="login-container" >
+    <div class="row cont g-0">
         <!-- Left side - Login form -->
         <div class="col-md-6 login-form-container d-flex align-items-center justify-content-center">
             <div class="login-form-wrapper">
@@ -12,7 +16,7 @@
                 </div>
                 
                 <div class="card login-card">
-                    <div class="card-body p-4 p-lg-5">
+                    <div class="card-body  p-4 p-lg-5">
                         <h2 class="card-title text-center mb-4">Welcome Back</h2>
                         
                         <form method="POST" class="login-form">

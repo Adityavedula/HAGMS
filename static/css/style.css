@@ -28,6 +28,8 @@ body {
 .navbar {
   background-color: var(--dark-color);
   padding: 1rem;
+  z-index: 10;
+  height: 6vh;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -71,7 +73,8 @@ body {
 
 /* Login Page */
 .login-container {
-  min-height: 100vh;
+  min-height: 86vh;
+  height: fit-content;
   background-color: #f5f7fa;
 }
 
@@ -96,7 +99,10 @@ body {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
-
+main{
+  height: 88vh !important;
+  z-index: 5;
+}
 .tagline {
   color: var(--dark-color);
   font-size: 1.1rem;
@@ -168,7 +174,8 @@ body {
 .login-image-container {
   position: relative;
   overflow: hidden;
-  background-color: #333;
+  background-color: #545454;  
+  /* #333 */
 }
 
 .login-image-wrapper {
@@ -224,10 +231,21 @@ body {
 /* Flash Messages */
 .flash-messages {
   margin-top: 1rem;
+  width: 20vw !important;
+  max-width: 350px !important;
+  margin: 0 auto;
+  position: absolute;
+  /* background-color: green; */
+  right: 0;
+  color: white;
+  z-index: 15;
 }
+
 
 .alert {
   border-radius: 8px;
+  opacity: 0.8;
+  color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
@@ -238,10 +256,17 @@ body {
 
 /* Footer */
 footer {
+  position: fixed;
   background-color: var(--dark-color);
   color: #f8f9fa;
-  padding: 1rem 0;
-  margin-top: 3rem;
+  /* padding:  0; */
+  /* height: 8vh; */
+  width: 100vw;
+  z-index: 10;
+  bottom: 0;
+  left: 0;
+  padding-top: 10px;
+  /* margin-top: 3rem; */
 }
 
 /* Responsive Adjustments */
@@ -249,6 +274,15 @@ footer {
   .login-image-container {
       display: none;
   }
+    .flash-messages{
+      width: 80vw !important;
+      /* background-color: green; */
+    }
+
+    .login-card .card .card-body{ 
+      border: none !important;
+      box-shadow: none !important;
+    }
   
   .login-form-container {
       padding: 1rem;
@@ -305,7 +339,6 @@ button:focus, .btn:focus {
 
 
 /* this is for dashboard */
-
 /* Dashboard Styles */
 .dashboard-container {
   padding: 20px 0;

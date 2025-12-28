@@ -51,17 +51,31 @@ def login():
 def register():
     if request.method == 'POST':
         email = request.form['email']
-        password = generate_password_hash(request.form['password'], method='sha256')
         name = request.form['name']
+
         if User.query.filter_by(email=email).first():
             flash('Email already registered')
             return redirect(url_for('register'))
-        new_user = User(email=email, password=password, name=name)
+
+        hashed_password = generate_password_hash(
+            request.form['password'],
+            method="pbkdf2:sha256"
+        )
+
+        new_user = User(
+            email=email,
+            password=hashed_password,
+            name=name
+        )
+
         db.session.add(new_user)
         db.session.commit()
+
         flash('Registration successful, please log in')
         return redirect(url_for('login'))
+
     return render_template('register.html')
+
 
 @app.route('/logout')
 @login_required
