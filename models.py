@@ -72,3 +72,15 @@ class Progress(db.Model):
     weight = db.Column(db.Float)
     body_fat_percentage = db.Column(db.Float)
     notes = db.Column(db.Text)
+
+
+class PoseSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    exercise = db.Column(db.String(50), nullable=False)
+    reps = db.Column(db.Integer, default=0)
+    avg_form_score = db.Column(db.Float, default=0)
+    duration_seconds = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('pose_sessions', lazy=True))

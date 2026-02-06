@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="add-progress-container">
+<div class="edit-progress-container">
     <div class="form-wrapper">
         <!-- Header -->
         <div class="form-header">
@@ -9,43 +9,22 @@
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div>
-                <h1 class="form-title">Add Progress Log</h1>
-                <p class="form-subtitle">Record your weight and body composition</p>
+                <h1 class="form-title">Edit Progress Log</h1>
+                <p class="form-subtitle">Update your weight and body composition data</p>
             </div>
         </div>
-
-        <!-- Current Stats Info (if available) -->
-        {% if latest_progress %}
-        <div class="current-stats">
-            <div class="stats-header">
-                <i class="fas fa-info-circle"></i>
-                <span>Your Latest Stats ({{ latest_progress.date.strftime('%b %d, %Y') }})</span>
-            </div>
-            <div class="stats-row">
-                <div class="stat-item">
-                    <span class="stat-label">Weight</span>
-                    <span class="stat-value">{{ "%.1f"|format(latest_progress.weight) }} kg</span>
-                </div>
-                {% if latest_progress.body_fat_percentage %}
-                <div class="stat-item">
-                    <span class="stat-label">Body Fat</span>
-                    <span class="stat-value">{{ "%.1f"|format(latest_progress.body_fat_percentage) }}%</span>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
 
         <!-- Form -->
-        <form method="POST" action="{{ url_for('add_progress_log') }}" class="progress-form" id="progressForm">
+        <form method="POST" action="{{ url_for('edit_progress_log', id=log.id) }}" class="progress-form"
+            id="progressForm">
             <!-- Date Field -->
             <div class="form-group">
                 <label for="date" class="form-label">
                     <i class="fas fa-calendar"></i>
                     Date <span class="required">*</span>
                 </label>
-                <input type="date" id="date" name="date" class="form-control" value="{{ today }}" max="{{ today }}"
-                    required>
+                <input type="date" id="date" name="date" class="form-control"
+                    value="{{ log.date.strftime('%Y-%m-%d') }}" max="{{ today }}" required>
                 <small class="form-hint">Select the date for this log entry</small>
             </div>
 
@@ -56,7 +35,7 @@
                     Weight (kg) <span class="required">*</span>
                 </label>
                 <input type="number" id="weight" name="weight" class="form-control" step="0.1" min="20" max="300"
-                    placeholder="e.g., 75.5" required>
+                    value="{{ log.weight }}" required>
                 <small class="form-hint">Enter your weight in kilograms</small>
             </div>
 
@@ -67,7 +46,7 @@
                     Body Fat Percentage (%)
                 </label>
                 <input type="number" id="body_fat_percentage" name="body_fat_percentage" class="form-control" step="0.1"
-                    min="3" max="60" placeholder="e.g., 18.5">
+                    min="3" max="60" value="{{ log.body_fat_percentage if log.body_fat_percentage else '' }}">
                 <small class="form-hint">Optional: Enter your body fat percentage if measured</small>
             </div>
 
@@ -78,7 +57,7 @@
                     Notes
                 </label>
                 <textarea id="notes" name="notes" class="form-control" rows="4"
-                    placeholder="Add any notes about your progress, how you're feeling, diet changes, etc..."></textarea>
+                    placeholder="Add any notes about your progress, how you're feeling, diet changes, etc...">{{ log.notes if log.notes else '' }}</textarea>
                 <small class="form-hint">Optional: Add notes about your progress or changes</small>
             </div>
 
@@ -88,40 +67,32 @@
                     <i class="fas fa-times"></i> Cancel
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Save Progress Log
+                    <i class="fas fa-save"></i> Update Progress Log
                 </button>
             </div>
         </form>
 
-        <!-- Tips Section -->
-        <div class="tips-section">
-            <h3 class="tips-title">
-                <i class="fas fa-lightbulb"></i> Tips for Tracking Progress
-            </h3>
-            <ul class="tips-list">
-                <li>
-                    <i class="fas fa-check-circle"></i>
-                    Weigh yourself at the same time each day (morning is best)
-                </li>
-                <li>
-                    <i class="fas fa-check-circle"></i>
-                    Track consistently - weekly measurements work well
-                </li>
-                <li>
-                    <i class="fas fa-check-circle"></i>
-                    Don't focus on daily fluctuations, look at trends over time
-                </li>
-                <li>
-                    <i class="fas fa-check-circle"></i>
-                    Body fat percentage is more important than weight alone
-                </li>
-            </ul>
+        <!-- Delete Section -->
+        <div class="delete-section">
+            <div class="delete-info">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                    <h3>Delete this log?</h3>
+                    <p>This action cannot be undone. All data for this log will be permanently removed.</p>
+                </div>
+            </div>
+            <form action="{{ url_for('delete_progress_log', id=log.id) }}" method="POST"
+                onsubmit="return confirm('Are you sure you want to delete this progress log? This action cannot be undone.');">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Delete Log
+                </button>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
-    // Form validation and enhancement
+    // Form validation
     document.getElementById('progressForm').addEventListener('submit', function (e) {
         const weight = parseFloat(document.getElementById('weight').value);
         const bodyFat = document.getElementById('body_fat_percentage').value;
@@ -143,15 +114,10 @@
             }
         }
     });
-
-    // Auto-focus first input
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('date').focus();
-    });
 </script>
 
 <style>
-    .add-progress-container {
+    .edit-progress-container {
         max-width: 800px;
         margin: 0 auto;
         padding: 2rem;
@@ -202,50 +168,6 @@
         margin: 0.5rem 0 0 0;
         opacity: 0.9;
         font-size: 1rem;
-    }
-
-    /* Current Stats */
-    .current-stats {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-left: 4px solid #3b82f6;
-        padding: 1.5rem;
-        margin: 1.5rem 1.5rem 0 1.5rem;
-        border-radius: 0.75rem;
-    }
-
-    .stats-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #1e40af;
-        font-weight: 600;
-        margin-bottom: 1rem;
-    }
-
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-    }
-
-    .stat-item {
-        background: white;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .stat-label {
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-value {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1f2937;
     }
 
     /* Form */
@@ -352,54 +274,58 @@
         background: #e5e7eb;
     }
 
-    /* Tips Section */
-    .tips-section {
-        background: #f9fafb;
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        flex: none;
+        width: auto;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Delete Section */
+    .delete-section {
+        background: #fef2f2;
         padding: 2rem;
-        border-top: 2px solid #e5e7eb;
-    }
-
-    .tips-title {
+        border-top: 2px solid #fecaca;
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 0.5rem;
-        font-size: 1.125rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 1rem;
+        gap: 2rem;
     }
 
-    .tips-title i {
-        color: #f59e0b;
-    }
-
-    .tips-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .tips-list li {
+    .delete-info {
         display: flex;
-        align-items: flex-start;
-        gap: 0.75rem;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        background: white;
-        border-radius: 0.5rem;
-        color: #4b5563;
-        line-height: 1.6;
+        gap: 1rem;
+        flex: 1;
     }
 
-    .tips-list i {
-        color: #10b981;
-        margin-top: 0.25rem;
+    .delete-info i {
+        color: #ef4444;
+        font-size: 1.5rem;
         flex-shrink: 0;
+    }
+
+    .delete-info h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #991b1b;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .delete-info p {
+        color: #7f1d1d;
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.5;
     }
 
     /* Responsive */
     @media (max-width: 640px) {
-        .add-progress-container {
+        .edit-progress-container {
             padding: 1rem;
         }
 
@@ -407,8 +333,7 @@
             padding: 1.5rem;
         }
 
-        .progress-form,
-        .tips-section {
+        .progress-form {
             padding: 1.5rem;
         }
 
@@ -416,8 +341,10 @@
             flex-direction: column;
         }
 
-        .stats-row {
-            grid-template-columns: 1fr;
+        .delete-section {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 1.5rem;
         }
     }
 </style>

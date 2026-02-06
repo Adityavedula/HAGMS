@@ -1,10 +1,669 @@
 {% extends 'layout.html' %}
+
 {% block content %}
-<h2>Your Progress Logs</h2>
-<a href="{{ url_for('add_progress_log') }}">Add Log</a>
-<ul>
-    {% for log in logs %}
-        <li>{{ log.date }} - {{ log.weight }} kg, {{ log.body_fat_percentage }}% BF</li>
-    {% endfor %}
-</ul>
+<div class="progress-logs-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title"> Progress Tracker</h1>
+            <p class="page-subtitle">Track your fitness journey and visualize your progress</p>
+        </div>
+        <a href="{{ url_for('add_progress_log') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Log
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon weight">
+                <i class="fas fa-weight"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">Current Weight</span>
+                <span class="stat-value">{{ "%.1f"|format(stats.current_weight) if stats.current_weight else 'N/A' }}
+                    kg</span>
+                {% if stats.weight_change is not none %}
+                <span class="stat-change {{ 'positive' if stats.weight_change < 0 else 'negative' }}">
+                    {{ "%.1f"|format(stats.weight_change|abs) }} kg
+                    <i class="fas fa-arrow-{{ 'down' if stats.weight_change < 0 else 'up' }}"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bodyfat">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">Body Fat %</span>
+                <span class="stat-value">{{ "%.1f"|format(stats.current_bf) if stats.current_bf else 'N/A' }}%</span>
+                {% if stats.bf_change is not none %}
+                <span class="stat-change {{ 'positive' if stats.bf_change < 0 else 'negative' }}">
+                    {{ "%.1f"|format(stats.bf_change|abs) }}%
+                    <i class="fas fa-arrow-{{ 'down' if stats.bf_change < 0 else 'up' }}"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon logs">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-label">Total Logs</span>
+                <span class="stat-value">{{ stats.total_logs }}</span>
+                <span class="stat-subtext">entries recorded</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Chart -->
+    {% if logs|length > 1 %}
+    <div class="chart-container">
+        <div class="chart-header">
+            <h2 class="chart-title">Progress Over Time</h2>
+            <div class="chart-legend">
+                <span class="legend-item">
+                    <span class="legend-dot weight"></span> Weight
+                </span>
+                <span class="legend-item">
+                    <span class="legend-dot bodyfat"></span> Body Fat %
+                </span>
+            </div>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="progressChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Progress Logs List -->
+    <div class="logs-section">
+        <h2 class="section-title">Progress History</h2>
+
+        {% if logs %}
+        <div class="logs-grid">
+            {% for log in logs %}
+            <div class="log-card">
+                <div class="log-header">
+                    <div class="log-date">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ log.date.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    <div class="log-actions">
+                        <a href="{{ url_for('edit_progress_log', id=log.id) }}" class="btn-icon edit" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form action="{{ url_for('delete_progress_log', id=log.id) }}" method="POST"
+                            style="display: inline;"
+                            onsubmit="return confirm('Are you sure you want to delete this log?');">
+                            <button type="submit" class="btn-icon delete" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="log-body">
+                    <div class="log-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Weight</span>
+                            <span class="metric-value">{{ "%.1f"|format(log.weight) }} kg</span>
+                        </div>
+                        {% if log.body_fat_percentage %}
+                        <div class="metric">
+                            <span class="metric-label">Body Fat</span>
+                            <span class="metric-value">{{ "%.1f"|format(log.body_fat_percentage) }}%</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if log.notes %}
+                    <div class="log-notes">
+                        <i class="fas fa-sticky-note"></i>
+                        <p>{{ log.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-chart-line"></i>
+            <h3>No Progress Logs Yet</h3>
+            <p>Start tracking your fitness journey by adding your first progress log!</p>
+            <a href="{{ url_for('add_progress_log') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Your First Log
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+{% if logs|length > 1 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Fetch chart data from API
+    fetch('{{ url_for("progress_chart_data") }}')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'Weight (kg)',
+                            data: data.weights,
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Body Fat (%)',
+                            data: data.body_fat,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(1);
+                                        label += context.datasetIndex === 0 ? ' kg' : '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Weight (kg)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Body Fat (%)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+</script>
+{% endif %}
+
+<style>
+    .progress-logs-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: #6b7280;
+        margin: 0.5rem 0 0 0;
+        font-size: 1rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        display: flex;
+        gap: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.weight {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+    }
+
+    .stat-icon.bodyfat {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .stat-icon.logs {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .stat-change {
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+    }
+
+    .stat-change.positive {
+        color: #10b981;
+    }
+
+    .stat-change.negative {
+        color: #ef4444;
+    }
+
+    .stat-subtext {
+        font-size: 0.875rem;
+        color: #9ca3af;
+        margin-top: 0.25rem;
+    }
+
+    /* Chart Container */
+    .chart-container {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .chart-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .legend-dot.weight {
+        background: #6366f1;
+    }
+
+    .legend-dot.bodyfat {
+        background: #f59e0b;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+
+    #progressChart {
+        max-height: 400px;
+    }
+
+    /* Logs Section */
+    .logs-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+    }
+
+    .logs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .log-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+
+    .log-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .log-header {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .log-date {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .log-date i {
+        color: #6366f1;
+    }
+
+    .log-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-icon.edit {
+        background: #eff6ff;
+        color: #3b82f6;
+    }
+
+    .btn-icon.edit:hover {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .btn-icon.delete {
+        background: #fef2f2;
+        color: #ef4444;
+    }
+
+    .btn-icon.delete:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    .log-body {
+        padding: 1.5rem;
+    }
+
+    .log-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric {
+        background: #f9fafb;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .metric-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .log-notes {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .log-notes i {
+        color: #f59e0b;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+    }
+
+    .log-notes p {
+        margin: 0;
+        color: #78350f;
+        line-height: 1.6;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: #6b7280;
+        margin-bottom: 2rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .progress-logs-container {
+            padding: 1rem;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .logs-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-wrapper {
+            height: 300px;
+        }
+
+        #progressChart {
+            max-height: 300px;
+        }
+    }
+</style>
 {% endblock %}
