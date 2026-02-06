@@ -3,10 +3,12 @@ from flask_login import UserMixin
 from db import db
 
 # Association table for many-to-many between WorkoutPlan and Exercise
-workout_exercises = db.Table('workout_exercises',
-    db.Column('workout_id', db.Integer, db.ForeignKey('workout_plan.id')),
-    db.Column('exercise_id', db.Integer, db.ForeignKey('exercise.id'))
+workout_exercises = db.Table(
+    "workout_exercises",
+    db.Column("workout_id", db.Integer, db.ForeignKey("workout_plan.id")),
+    db.Column("exercise_id", db.Integer, db.ForeignKey("exercise.id")),
 )
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -17,13 +19,14 @@ class User(db.Model, UserMixin):
     gender = db.Column(db.String(10))
     height = db.Column(db.Float)
     weight = db.Column(db.Float)
-    role = db.Column(db.String(20), default='user')  # 'user' or 'admin'
+    role = db.Column(db.String(20), default="user")  # 'user' or 'admin'
     goals = db.Column(db.String(255))  # e.g., 'weight loss', 'muscle gain'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    workout_plans = db.relationship('WorkoutPlan', backref='creator', lazy=True)
-    nutrition_logs = db.relationship('NutritionLog', backref='user', lazy=True)
-    progress_logs = db.relationship('Progress', backref='user', lazy=True)
+    workout_plans = db.relationship("WorkoutPlan", backref="creator", lazy=True)
+    nutrition_logs = db.relationship("NutritionLog", backref="user", lazy=True)
+    progress_logs = db.relationship("Progress", backref="user", lazy=True)
+    pose_sessions = db.relationship("PoseSession", backref="user", lazy=True)
 
 
 class WorkoutPlan(db.Model):
@@ -32,13 +35,15 @@ class WorkoutPlan(db.Model):
     level = db.Column(db.String(50))  # beginner, intermediate, advanced
     description = db.Column(db.Text)
     duration = db.Column(db.Integer, nullable=True)  # Add duration field in minutes
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     date = db.Column(db.Date, nullable=True)  # Add date field for scheduling workouts
     progress = db.Column(db.Integer, default=0)  # Add progress field (0-100)
     calories = db.Column(db.Integer, nullable=True)  # Add calories field
 
-    exercises = db.relationship('Exercise', secondary=workout_exercises, backref='plans')
+    exercises = db.relationship(
+        "Exercise", secondary=workout_exercises, backref="plans"
+    )
 
 
 class Exercise(db.Model):
@@ -56,7 +61,7 @@ class Exercise(db.Model):
 
 class NutritionLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     date = db.Column(db.Date)
     meal = db.Column(db.String(100))
     calories = db.Column(db.Float)
@@ -67,7 +72,7 @@ class NutritionLog(db.Model):
 
 class Progress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     date = db.Column(db.Date)
     weight = db.Column(db.Float)
     body_fat_percentage = db.Column(db.Float)
@@ -75,12 +80,17 @@ class Progress(db.Model):
 
 
 class PoseSession(db.Model):
+    """Model to store pose detection workout sessions"""
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    exercise = db.Column(db.String(50), nullable=False)
-    reps = db.Column(db.Integer, default=0)
-    avg_form_score = db.Column(db.Float, default=0)
-    duration_seconds = db.Column(db.Integer, default=0)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    exercise = db.Column(
+        db.String(100), nullable=False
+    )  # Exercise type (squat, pushup, etc.)
+    reps = db.Column(db.Integer, default=0)  # Number of reps completed
+    avg_form_score = db.Column(db.Float, default=0.0)  # Average form score (0-100)
+    duration_seconds = db.Column(db.Integer, default=0)  # Duration in seconds
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship('User', backref=db.backref('pose_sessions', lazy=True))
+    def __repr__(self):
+        return f"<PoseSession {self.exercise} - {self.reps} reps>"

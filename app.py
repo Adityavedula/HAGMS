@@ -927,36 +927,38 @@ def save_pose_session():
     """API endpoint to save pose detection workout session data"""
     try:
         data = request.get_json()
-        
+
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
+
         exercise = data.get("exercise")
         reps = data.get("reps", 0)
         avg_form_score = data.get("avg_form_score", 0)
         duration_seconds = data.get("duration_seconds", 0)
-        
+
         if not exercise:
             return jsonify({"error": "Exercise type is required"}), 400
-        
+
         # Create new pose session record
         new_session = PoseSession(
             user_id=current_user.id,
             exercise=exercise,
             reps=int(reps),
             avg_form_score=float(avg_form_score),
-            duration_seconds=int(duration_seconds)
+            duration_seconds=int(duration_seconds),
         )
-        
+
         db.session.add(new_session)
         db.session.commit()
-        
-        return jsonify({
-            "success": True,
-            "message": "Workout session saved successfully",
-            "session_id": new_session.id
-        }), 200
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Workout session saved successfully",
+                "session_id": new_session.id,
+            }
+        ), 200
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -966,21 +968,26 @@ def save_pose_session():
 @login_required
 def get_pose_sessions():
     """API endpoint to get user's pose detection sessions"""
-    sessions = PoseSession.query.filter_by(user_id=current_user.id).order_by(
-        PoseSession.created_at.desc()
-    ).limit(20).all()
-    
-    return jsonify([
-        {
-            "id": s.id,
-            "exercise": s.exercise,
-            "reps": s.reps,
-            "avg_form_score": s.avg_form_score,
-            "duration_seconds": s.duration_seconds,
-            "created_at": s.created_at.isoformat()
-        }
-        for s in sessions
-    ])
+    sessions = (
+        PoseSession.query.filter_by(user_id=current_user.id)
+        .order_by(PoseSession.created_at.desc())
+        .limit(20)
+        .all()
+    )
+
+    return jsonify(
+        [
+            {
+                "id": s.id,
+                "exercise": s.exercise,
+                "reps": s.reps,
+                "avg_form_score": s.avg_form_score,
+                "duration_seconds": s.duration_seconds,
+                "created_at": s.created_at.isoformat(),
+            }
+            for s in sessions
+        ]
+    )
 
 
 if __name__ == "__main__":

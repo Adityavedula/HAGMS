@@ -244,6 +244,7 @@
                 sessionStartTime = Date.now();
                 formScores = [];
                 reps = 0;
+                isCounting = false;
                 isSessionActive = true;
 
                 // Start pose detection
@@ -334,6 +335,7 @@
             }
 
             reps = 0;
+            isCounting = false;
             repCount.textContent = '0';
             formScore.textContent = '0%';
         });
@@ -345,6 +347,7 @@
                 feedback.textContent = 'Exercise changed. Continue your workout.';
                 feedback.className = 'alert alert-info';
                 reps = 0;
+                isCounting = false;
                 repCount.textContent = '0';
                 formScore.textContent = '0%';
             }
